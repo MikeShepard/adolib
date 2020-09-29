@@ -47,7 +47,7 @@ Task Test  {
     $SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-    if((Test-Path -Path $ProjectRoot\Tests){
+    if((Test-Path -Path $ProjectRoot\Tests)){
         $TestResults = start-process PowerShell.exe -ArgumentList '-STA',"-command Invoke-Pester -Path $ProjectRoot\Tests -PassThru -OutputFormat NUnitXml -OutputFile $ProjectRoot\$TestFile" -NoNewWindow -wait 
         [Net.ServicePointManager]::SecurityProtocol = $SecurityProtocol
 

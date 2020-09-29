@@ -47,23 +47,25 @@ Task Test  {
     $SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-    $TestResults = start-process PowerShell.exe -ArgumentList '-STA',"-command Invoke-Pester -Path $ProjectRoot\Tests -PassThru -OutputFormat NUnitXml -OutputFile $ProjectRoot\$TestFile" -NoNewWindow -wait 
-    [Net.ServicePointManager]::SecurityProtocol = $SecurityProtocol
+    if((Test-Path -Path $ProjectRoot\Tests){
+        $TestResults = start-process PowerShell.exe -ArgumentList '-STA',"-command Invoke-Pester -Path $ProjectRoot\Tests -PassThru -OutputFormat NUnitXml -OutputFile $ProjectRoot\$TestFile" -NoNewWindow -wait 
+        [Net.ServicePointManager]::SecurityProtocol = $SecurityProtocol
 
-    # In Appveyor?  Upload our tests! #Abstract this into a function?
-    If ($ENV:BHBuildSystem -eq 'AppVeyor') {
-        (New-Object 'System.Net.WebClient').UploadFile(
-            "https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)",
-            "$ProjectRoot\$TestFile" )
-    }
+        # In Appveyor?  Upload our tests! #Abstract this into a function?
+        If ($ENV:BHBuildSystem -eq 'AppVeyor') {
+            (New-Object 'System.Net.WebClient').UploadFile(
+                "https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)",
+                "$ProjectRoot\$TestFile" )
+        }
 
-    Remove-Item "$ProjectRoot\$TestFile" -Force -ErrorAction SilentlyContinue
-    # Failed tests?
-    # Need to tell psake or it will proceed to the deployment. Danger!
-    if ($TestResults -like '*FailedCount       : 0*') {
-        Write-Error "Failed '$($TestResults.FailedCount)' tests, build failed"
+        Remove-Item "$ProjectRoot\$TestFile" -Force -ErrorAction SilentlyContinue
+        # Failed tests?
+        # Need to tell psake or it will proceed to the deployment. Danger!
+        if ($TestResults -like '*FailedCount       : 0*') {
+            Write-Error "Failed '$($TestResults.FailedCount)' tests, build failed"
+        }
+        "`n"
     }
-    "`n"
 }
 
 Task Build -Depends Test {

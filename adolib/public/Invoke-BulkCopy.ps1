@@ -1,6 +1,6 @@
   
   
-  <#
+<#
       .SYNOPSIS
           Uses the .NET SQLBulkCopy class to quickly copy rows into a destination table.
   
@@ -52,7 +52,8 @@
           An object containing special options to modify the bulk copy operation.
           See http://msdn.microsoft.com/en-us/library/system.data.sqlclient.sqlbulkcopyoptions.aspx for values.
   
-  
+      .PARAMETER GenerateMapping
+         Switch indicating whether to generate mapping (direct column-to-column).  If you want a custom mapping, use the Mapping parameter.
       .EXAMPLE
           PS C:\> $cmd=new-sqlcommand -server MyServer -sql "Select * from MyTable"
           PS C:\> invoke-sqlbulkcopy -records $cmd -server MyOtherServer -table CopyOfMyTable
@@ -66,53 +67,64 @@
           System.Data.SqlClient.SqlCommand
   
   #>
-  function Invoke-Bulkcopy{
-    param([Parameter(Mandatory=$true)]$records,
-          [Parameter(Mandatory=$true)]$server,
-          [string]$database,
-          [string]$user,
-          [string]$password,
-          [Parameter(Mandatory=$true)][string]$table,
-          [hashtable]$mapping=@{},
-          [int]$batchsize=0,
-          [System.Data.SqlClient.SqlTransaction]$transaction=$null,
-          [int]$notifyAfter=0,
-          [scriptblock]$notifyFunction={Write-Host "$($args[1].RowsCopied) rows copied."},
-          [System.Data.SqlClient.SqlBulkCopyOptions]$options=[System.Data.SqlClient.SqlBulkCopyOptions]::Default)
+function Invoke-Bulkcopy {
+    param([Parameter(Mandatory = $true)]$records,
+        [Parameter(Mandatory = $true)]$server,
+        [string]$database,
+        [string]$user,
+        [string]$password,
+        [Parameter(Mandatory = $true)][string]$table,
+        [hashtable]$mapping = @{},
+        [int]$batchsize = 0,
+        [System.Data.SqlClient.SqlTransaction]$transaction = $null,
+        [int]$notifyAfter = 0,
+        [scriptblock]$notifyFunction = { Write-Host "$($args[1].RowsCopied) rows copied." },
+        [System.Data.SqlClient.SqlBulkCopyOptions]$options = [System.Data.SqlClient.SqlBulkCopyOptions]::Default,
+        [Switch]$GenerateMapping)
   
-      #use existing "New-Connection" function to create a connection string.        
-      $connection=New-Connection -server $server -database $Database -User $user -password $password
-      $connectionString = $connection.ConnectionString
-      $connection.close()
+    #use existing "New-Connection" function to create a connection string.        
+    $connection = New-Connection -server $server -database $Database -User $user -password $password
+    $connectionString = $connection.ConnectionString
+    $connection.close()
   
-      #Use a transaction if one was specified
-      if ($transaction -is [System.Data.SqlClient.SqlTransaction]){
-          $bulkCopy=new-object "Data.SqlClient.SqlBulkCopy" $connectionString $options  $transaction
-      } else {
-          $bulkCopy = new-object "Data.SqlClient.SqlBulkCopy" $connectionString
-      }
-      $bulkCopy.BatchSize=$batchSize
-      $bulkCopy.DestinationTableName = $table
-      $bulkCopy.BulkCopyTimeout=10000000
-      if ($notifyAfter -gt 0){
-          $bulkCopy.NotifyAfter=$notifyafter
-          $bulkCopy.Add_SQlRowscopied($notifyFunction)
-      }
-  
-      #Add column mappings if they were supplied
-      foreach ($key in $mapping.Keys){
-          $bulkCopy.ColumnMappings.Add($mapping[$key],$key) | out-null
-      }
+    #Use a transaction if one was specified
+    if ($transaction -is [System.Data.SqlClient.SqlTransaction]) {
+        $bulkCopy = new-object "Data.SqlClient.SqlBulkCopy" $connectionString $options  $transaction
+    }
+    else {
+        $bulkCopy = new-object "Data.SqlClient.SqlBulkCopy" $connectionString
+    }
+    $bulkCopy.BatchSize = $batchSize
+    $bulkCopy.DestinationTableName = $table
+    $bulkCopy.BulkCopyTimeout = 10000000
+    if ($notifyAfter -gt 0) {
+        $bulkCopy.NotifyAfter = $notifyafter
+        $bulkCopy.Add_SQlRowscopied($notifyFunction)
+    }
+    if ($mapping) {
+        #Add column mappings if they were supplied
+        foreach ($key in $mapping.Keys) {
+            $bulkCopy.ColumnMappings.Add($mapping[$key], $key) | out-null
+        }
+    }
+    elseif ($GenerateMapping) {
+        $columns = $records[0].table.columns.ColumnName
+        foreach ($column in $columns) {
+            $bulkCopy.ColumnMappings.Add($key, $key)
+        }
+    }
       
-      write-debug "Bulk copy starting at $(get-date)"
-      if ($records -is [System.Data.Common.DBCommand]){
-          #if passed a command object (rather than a datatable), ask it for a datareader to stream the records
-          $bulkCopy.WriteToServer($records.ExecuteReader())
-      } elseif ($records -is [System.Data.Common.DbDataReader]){
-          #if passed a Datareader object use it to stream the records
-          $bulkCopy.WriteToServer($records)
-      } else {
-          $bulkCopy.WriteToServer($records)
-      }
-      write-debug "Bulk copy finished at $(get-date)"
-  }
+    write-debug "Bulk copy starting at $(get-date)"
+    if ($records -is [System.Data.Common.DBCommand]) {
+        #if passed a command object (rather than a datatable), ask it for a datareader to stream the records
+        $bulkCopy.WriteToServer($records.ExecuteReader())
+    }
+    elseif ($records -is [System.Data.Common.DbDataReader]) {
+        #if passed a Datareader object use it to stream the records
+        $bulkCopy.WriteToServer($records)
+    }
+    else {
+        $bulkCopy.WriteToServer($records)
+    }
+    write-debug "Bulk copy finished at $(get-date)"
+}

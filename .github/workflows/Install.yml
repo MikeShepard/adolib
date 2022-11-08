@@ -7,6 +7,7 @@ on:
 jobs:
   publish-to-gallery:
     runs-on: ubuntu-latest
+    environment: PRD
     steps:
       - uses: actions/checkout@v3
       - name: Build and publish

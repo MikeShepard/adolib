@@ -15,4 +15,5 @@ jobs:
           PSGALLERY_KEY: ${{ secrets.PSGALLERY_KEY }}
         shell: pwsh
         run: |
+            Write-host "Key=$env:PSGALLERY_KEY"
             Publish-Module -Path /adolib -NuGetApiKey $env:PSGALLERY_KEY -Verbose

@@ -9,7 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: PRD
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out repository code
+        uses: actions/checkout@v3
       - name: Build and publish
         env:
           PSGALLERY_KEY: ${{ secrets.PSGALLERY_KEY }}

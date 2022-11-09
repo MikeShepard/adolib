@@ -101,16 +101,16 @@ function Invoke-Bulkcopy {
         $bulkCopy.NotifyAfter = $notifyafter
         $bulkCopy.Add_SQlRowscopied($notifyFunction)
     }
-    if ($mapping) {
+    if ($psboundParameters.ContainsKey('mapping')) {
         #Add column mappings if they were supplied
         foreach ($key in $mapping.Keys) {
             $bulkCopy.ColumnMappings.Add($mapping[$key], $key) | out-null
         }
     }
     elseif ($GenerateMapping) {
-        $columns = $records[0].table.columns.ColumnName
+        $columns = $records.Rows[0].table.columns.columnname
         foreach ($column in $columns) {
-            $bulkCopy.ColumnMappings.Add($key, $key)
+            $bulkCopy.ColumnMappings.Add($column, $column)| out-null
         }
     }
       

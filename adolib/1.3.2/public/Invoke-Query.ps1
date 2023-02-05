@@ -71,7 +71,7 @@
            [Parameter(ParameterSetName="AdHocConnection")][string]$user,
            [Parameter(ParameterSetName="AdHocConnection")][string]$password,
            [System.Data.SqlClient.SqlTransaction]$transaction=$null,
-           [ValidateSet("DataSet", "DataTable", "DataRow", "Dynamic")] [string]$AsResult="Dynamic"
+           [ValidateSet("DataSet", "DataTable", "DataRow", "Dynamic",'PSCustomObject')] [string]$AsResult="Dynamic"
            )
         
         $connectionparameters=copy-hashtable $PSBoundParameters -exclude AsResult
@@ -90,7 +90,10 @@
             'DataSet'   { $result = $ds }
             'DataTable' { $result = $ds.Tables }
             'DataRow'   { $result = $ds.Tables[0] }
-            'Dynamic'   { $result = get-commandresults $ds $outparameters } 
+            'Dynamic'   { $result = get-commandresults $ds $outparameters }
+            'PSCustomObject' {
+                $result=Get-FlatSQLData -data $ds.Tables[0]
+            } 
         }
         return $result
     }

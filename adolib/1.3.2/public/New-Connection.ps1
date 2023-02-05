@@ -17,6 +17,9 @@
           
       .PARAMETER  Password
           The password for the user specified by the User parameter.
+
+      .PARAMETER  Timeout
+          The connection timeout (defaults to 0)
   
       .EXAMPLE
           PS C:\> New-Connection -server MYSERVER -database master
@@ -36,7 +39,8 @@
     param([Parameter(Mandatory=$true)][string]$server, 
           [string]$database='',
           [string]$user='',
-          [string]$password='')
+          [string]$password='',
+          [int][Alias('ConnectTimeout')]$timeout)
     
         if($database -ne ''){
           $dbclause="Database=$database;"
@@ -44,9 +48,12 @@
         $conn=new-object System.Data.SqlClient.SQLConnection
         
         if ($user -ne ''){
-            $conn.ConnectionString="Server=$server;$dbclause`User ID=$user;Password=$password;Pooling=false"
+            $conn.ConnectionString="Server=$server;$dbclause`User ID=$user;Password=$password;Pooling=false;MultipleActiveResultSets=true"
         } else {
-            $conn.ConnectionString="Server=$server;$dbclause`Integrated Security=True"
+            $conn.ConnectionString="Server=$server;$dbclause`Integrated Security=True;MultipleActiveResultSets=true"
+        }
+        if($timeout){
+            $conn.ConnectionString+=";Connection Timeout=$timeout"
         }
         $conn.Open()
         write-debug $conn.ConnectionString

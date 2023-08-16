@@ -72,8 +72,12 @@
         $cmd=new-object system.Data.SqlClient.SqlCommand($sql,$dbconn)
         $cmd.CommandTimeout=$timeout
         foreach($p in $parameters.Keys){
-            $parm=$cmd.Parameters.AddWithValue("@$p",$parameters[$p])
-            if (Test-NULL $parameters[$p]){
+            if($parameters[$p] -is [Hashtable]){
+                $parm=$cmd.Parameters.Add("@$p",[System.Data.SQLDbType]($parameters[$p].Type))
+                $parm.Value=$parameters[$p].Value
+            } else {
+              $parm=$cmd.Parameters.AddWithValue("@$p",$parameters[$p])
+            }if (Test-NULL $parameters[$p]){
                $parm.Value=[DBNull]::Value
             }
         }

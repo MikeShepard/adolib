@@ -61,7 +61,7 @@
           3.  An object that contains a dictionary of ouptut parameters and their values and either 1 or 2 (for queries that contain output parameters)
   #>
   function Invoke-Query{
-    param( [Parameter(Mandatory=$true)][string]$sql,
+    param( [Parameter(Mandatory=$true,Position=0)][string]$sql,
            [Parameter(ParameterSetName="SuppliedConnection")][System.Data.SqlClient.SqlConnection]$connection,
            [hashtable]$parameters=@{},
            [hashtable]$outparameters=@{},

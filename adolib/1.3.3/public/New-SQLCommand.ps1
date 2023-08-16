@@ -53,7 +53,7 @@
   
   #>
   function New-SQLCommand{
-    param([Parameter(Mandatory=$true)][Alias('storedProcName')][string]$sql,
+    param([Parameter(Mandatory=$true,Position=0)][Alias('storedProcName')][string]$sql,
           [Parameter(ParameterSetName="SuppliedConnection")][System.Data.SqlClient.SQLConnection]$connection,
           [hashtable]$parameters=@{},
           [int]$timeout=30,

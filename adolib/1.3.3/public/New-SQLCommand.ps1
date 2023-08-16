@@ -53,7 +53,7 @@
   
   #>
   function New-SQLCommand{
-    param([Parameter(Mandatory=$true)][Alias('storedProcName')][string]$sql,
+    param([Parameter(Mandatory=$true,Position=0)][Alias('storedProcName')][string]$sql,
           [Parameter(ParameterSetName="SuppliedConnection")][System.Data.SqlClient.SQLConnection]$connection,
           [hashtable]$parameters=@{},
           [int]$timeout=30,
@@ -72,8 +72,12 @@
         $cmd=new-object system.Data.SqlClient.SqlCommand($sql,$dbconn)
         $cmd.CommandTimeout=$timeout
         foreach($p in $parameters.Keys){
-            $parm=$cmd.Parameters.AddWithValue("@$p",$parameters[$p])
-            if (Test-NULL $parameters[$p]){
+            if($parameters[$p] -is [Hashtable]){
+                $parm=$cmd.Parameters.Add("@$p",[System.Data.SQLDbType]($parameters[$p].Type))
+                $parm.Value=$parameters[$p].Value
+            } else {
+              $parm=$cmd.Parameters.AddWithValue("@$p",$parameters[$p])
+            }if (Test-NULL $parameters[$p]){
                $parm.Value=[DBNull]::Value
             }
         }

@@ -50,7 +50,7 @@
   
   #>
   function Invoke-Sql{
-    param([Parameter(Mandatory=$true)][string]$sql,
+    param([Parameter(Mandatory=$true,Position=0)][string]$sql,
           [Parameter(ParameterSetName="SuppliedConnection")][System.Data.SqlClient.SQLConnection]$connection,
           [hashtable]$parameters=@{},
           [hashtable]$outparameters=@{},

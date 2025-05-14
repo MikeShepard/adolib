@@ -65,11 +65,12 @@
 
            $cmd=new-sqlcommand @PSBoundParameters
 
+           $result=$cmd.ExecuteNonQuery()
            #if it was an ad hoc connection, close it
            if ($server){
               $cmd.connection.close()
            }
 
-           return $cmd.ExecuteNonQuery()
+           return $result
 
     }
